@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メトロノーム</title>
+    <!-- Materialize CSS & Google Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* プルダウンメニューのリップルエフェクト */
+        .select-wrapper input.select-dropdown {
+            transition: background-color 0.3s;
+        }
+        .select-wrapper input.select-dropdown:focus {
+            background-color: rgba(0, 0, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- ナビゲーションバー -->
+    <nav>
+        <div class="nav-wrapper blue darken-3">
+            <a href="#" class="brand-logo center">メトロノーム</a>
+            <ul class="right">
+                <li><a href="#appInfoModal" class="modal-trigger waves-effect"><i class="material-icons">info</i></a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container center-align" style="margin-top: 50px;">
+        <h5>テンポ設定</h5>
+        <input type="range" id="bpm" min="40" max="200" value="120">
+        <p id="bpm-display">BPM: 120</p>
+
+        <h5>拍子設定</h5>
+        <div class="input-field">
+            <select id="time-signature">
+                <option value="" disabled selected>選択してください</option>
+                <option value="1/4">1/4 拍子</option>
+                <option value="2/4">2/4 拍子</option>
+                <option value="3/4">3/4 拍子</option>
+                <option value="4/4">4/4 拍子</option>
+                <option value="5/4">5/4 拍子</option>
+                <option value="6/4">6/4 拍子</option>
+                <option value="7/4">7/4 拍子</option>
+                <option value="8/4">8/4 拍子</option>
+                <option value="9/4">9/4 拍子</option>
+                <option value="10/4">10/4 拍子</option>
+                <option value="11/4">11/4 拍子</option>
+                <option value="12/4">12/4 拍子</option>
+                <option value="1/8">1/8 拍子</option>
+                <option value="2/8">2/8 拍子</option>
+                <option value="3/8">3/8 拍子</option>
+                <option value="4/8">4/8 拍子</option>
+                <option value="5/8">5/8 拍子</option>
+                <option value="6/8">6/8 拍子</option>
+                <option value="7/8">7/8 拍子</option>
+                <option value="8/8">8/8 拍子</option>
+                <option value="9/8">9/8 拍子</option>
+                <option value="10/8">10/8 拍子</option>
+                <option value="11/8">11/8 拍子</option>
+                <option value="12/8">12/8 拍子</option>
+            </select>
+            <label>拍子を選択</label>
+        </div>
+
+        <button class="btn blue darken-2 waves-effect waves-light" id="start-btn">スタート</button>
+        <button class="btn red darken-2 waves-effect waves-light" id="stop-btn">ストップ</button>
+    </div>
+
+    <!-- アプリ情報モーダル -->
+    <div id="appInfoModal" class="modal">
+        <div class="modal-content">
+            <h4>アプリについて</h4>
+            <p>このアプリケーションはメトロノームです。サウンドはヤマハ製を使用しています。</p>
+            <p><strong>バージョン:</strong> 1.5.0</p>
+            <p><strong>音:</strong> Bell.wav, Click.wav</p>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">閉じる</a>
+        </div>
+    </div>
+
+    <!-- Materialize & JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var elems = document.querySelectorAll('.modal');
+            M.Modal.init(elems);
+
+            var selectElems = document.querySelectorAll('select');
+            M.FormSelect.init(selectElems);
+        });
+
+        const bpmSlider = document.getElementById("bpm");
+        const bpmDisplay = document.getElementById("bpm-display");
+        const timeSignatureSelect = document.getElementById("time-signature");
+        const startBtn = document.getElementById("start-btn");
+        const stopBtn = document.getElementById("stop-btn");
+
+        let metronomeInterval;
+        let currentBpm = 120;
+        const strongBeat = new Audio("Bell.wav");
+        const weakBeat = new Audio("Click.wav");
+
+        function startMetronome(bpm) {
+            if (metronomeInterval) clearInterval(metronomeInterval);
+
+            let timeSignature = timeSignatureSelect.value.split('/');
+            let beatsPerMeasure = parseInt(timeSignature[0]);
+            let noteType = parseInt(timeSignature[1]);
+
+            let interval = (60000 / bpm) * (4 / noteType);
+            let count = 0;
+
+            metronomeInterval = setInterval(() => {
+                if (count % beatsPerMeasure === 0) {
+                    strongBeat.currentTime = 0;
+                    strongBeat.play();
+                } else {
+                    weakBeat.currentTime = 0;
+                    weakBeat.play();
+                }
+                count = (count + 1) % beatsPerMeasure;
+            }, interval);
+        }
+
+        bpmSlider.addEventListener("input", function () {
+            currentBpm = bpmSlider.value;
+            bpmDisplay.textContent = `BPM: ${currentBpm}`;
+            if (metronomeInterval) startMetronome(currentBpm);
+        });
+
+        startBtn.addEventListener("click", function () {
+            if (!timeSignatureSelect.value) {
+                alert("拍子を選択してください");
+                return;
+            }
+            startMetronome(currentBpm);
+        });
+
+        stopBtn.addEventListener("click", function () {
+            clearInterval(metronomeInterval);
+            metronomeInterval = null;
+        });
+    </script>
+</body>
+</html>
